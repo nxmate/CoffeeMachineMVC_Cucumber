@@ -14,7 +14,6 @@ public class Selectors {
     public static By getCoffeeTypeOption(String coffeeType) {
         return By.xpath(String.format("//select[@id='type']/option[@value='%s']", coffeeType.toLowerCase()));
     }
-
     public static final By OPTION_VALUE_ESPRESSO = By.xpath("//select[@id='type']/option[@value='espresso']");
     public static final By OPTION_VALUE_LATTE = By.xpath("//select[@id='type']/option[@value='latte']");
     public static final By OPTION_VALUE_CAPPUCCINO = By.xpath("//select[@id='type']/option[@value='cappuccino']");
