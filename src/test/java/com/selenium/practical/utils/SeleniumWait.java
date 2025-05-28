@@ -328,4 +328,22 @@ public class SeleniumWait {
     private boolean isNetworkActivityStopped() {
         return runningRequests.get() == 0;
     }
+
+    /*
+     * Waiting the scripts for specified period of time
+     */
+    public void waitForSpecifiedTime(int totalSeconds) {
+        int interval = 10;
+        int waited = 0;
+
+        while (waited < totalSeconds) {
+            try {
+                Thread.sleep(Math.min(interval, totalSeconds - waited) * 1000L);
+                driver.getTitle();
+                waited += interval;
+            } catch (Exception ignored) {
+            }
+        }
+        ReportMsg.log("User wait for " + totalSeconds + " seconds");
+    }
 }

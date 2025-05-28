@@ -28,4 +28,20 @@ public class CoffeeMachinePages {
     public void verifyTitle(String status) {
         coffeeMachineActions.verifyTitle(status);
     }
+
+    public void verifyHeader2(String header) {
+        coffeeMachineActions.verifyHeader2(header);
+    }
+
+    public void verifyLabelIsPresent() {
+        coffeeMachineActions.verifyLabelIsPresent();
+    }
+
+    public void verifyLabelText(String labelText) {
+        coffeeMachineActions.verifyLabelText(labelText);
+    }
+
+    public void selectCoffeeType(String coffeeType) {
+        coffeeMachineActions.selectCoffeeType(coffeeType);
+    }
 }

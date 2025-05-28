@@ -41,10 +41,35 @@ public class CoffeeMachineSteps {
         page.verifyTitle(expectedStatusTitle);
     }
 
+    @Then("I verify that the second header is (.*)$")
+    public void verifyHeader2(String header) {
+        page.verifyHeader2(header);
+    }
+
+    @Then("I verify label is present")
+    public void verifyLabelIsPresent() {
+        page.verifyLabelIsPresent();
+    }
+
+    @Then("I verify label text is (.*)$")
+    public void verifyLabelText(String labelText) {
+        page.verifyLabelText(labelText);
+    }
+
+    @Then("I select (.*) as coffee type$")
+    public void selectCoffeeType(String coffeeType) {
+        page.selectCoffeeType(coffeeType);
+    }
+
     @And("I wait for solid network silence")
     public void waitForSolidNetworkSilence() {
         wait.waitForSolidNetworkSilence();
         ReportMsg.log("User wait for solid network silence.");
+    }
+
+    @When("^I wait for (\\d+) seconds$")
+    public void waitForSpecifiedTime(int sec) {
+        wait.waitForSpecifiedTime(sec);
     }
 
     @After
