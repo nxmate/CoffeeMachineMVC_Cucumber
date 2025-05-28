@@ -1,0 +1,8 @@
+coffeeMachine:
+  statusTitle: |
+    The coffee machine has:
+    400 ml of water
+    540 ml of milk
+    120 g of beans
+    9 disposable cups
+    $550 of money
