@@ -1,6 +1,12 @@
 package com.selenium.practical.utils;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.openqa.selenium.*;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.logging.LogEntries;
+import org.openqa.selenium.logging.LogEntry;
+import org.openqa.selenium.logging.LogType;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -9,8 +15,7 @@ import org.testng.Assert;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -27,10 +32,10 @@ public class SeleniumWait {
     private AtomicInteger runningRequests;
     private ReportMsg Log;
 
-    public SeleniumWait(WebDriver driver, int timeout) {
+    public SeleniumWait(WebDriver driver, Duration timeout) {
         this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(timeout));
-        this.timeout = timeout;
+        this.wait = new WebDriverWait(driver, timeout);
+        this.timeout = (int) timeout.toSeconds();
         this.runningRequests = new AtomicInteger(0);
     }
 
@@ -326,7 +331,97 @@ public class SeleniumWait {
     }
 
     private boolean isNetworkActivityStopped() {
-        return runningRequests.get() == 0;
+        final Set<String> trackedTypes = Set.of(
+                "Document", "Stylesheet", "Image", "Media", "Font",
+                "Script", "XHR", "Fetch", "EventSource", "WebSocket",
+                "Manifest", "Other"
+        );
+        final boolean enableVerboseLogging = true;
+
+        java.util.function.Function<String, String> extractNameFromUrl = (url) -> {
+            if (url == null || url.isEmpty()) return "unknown";
+            try {
+                java.net.URL netUrl = new java.net.URL(url);
+                String path = netUrl.getPath();
+                if (path == null || path.isEmpty() || path.equals("/")) {
+                    return netUrl.getHost();
+                }
+                String[] segments = path.split("/");
+                return segments.length > 0 ? segments[segments.length - 1] : path;
+            } catch (Exception e) {
+                return "unknown";
+            }
+        };
+
+        LogEntries entries = driver.manage().logs().get(LogType.PERFORMANCE);
+        boolean found = false;
+
+        Map<String, JsonObject> requestsMap = new HashMap<>();
+        Map<String, Integer> responseStatusMap = new HashMap<>();
+
+        for (LogEntry entry : entries) {
+            try {
+                JsonObject json = JsonParser.parseString(entry.getMessage()).getAsJsonObject();
+                JsonObject message = json.getAsJsonObject("message");
+                if (message == null) continue;
+
+                String method = message.get("method").getAsString();
+
+                if ("Network.requestWillBeSent".equals(method)) {
+                    JsonObject params = message.getAsJsonObject("params");
+                    if (params != null && params.has("type")) {
+                        String type = params.get("type").getAsString();
+                        if (trackedTypes.contains(type)) {
+                            found = true;
+
+                            JsonObject request = params.getAsJsonObject("request");
+                            String requestId = params.has("requestId") ? params.get("requestId").getAsString() : "N/A";
+                            String url = request != null && request.has("url") ? request.get("url").getAsString() : "unknown";
+                            String requestMethod = request != null && request.has("method") ? request.get("method").getAsString() : "unknown";
+
+                            requestsMap.put(requestId, request);
+
+                            if (enableVerboseLogging) {
+                                String name = extractNameFromUrl.apply(url);
+                                String logMessage = String.format("Request started: %s, %s, %s, %s",
+                                        name, requestMethod, type, url);
+//                                 Remove comment to have logs for investigation
+//                                 ReportMsg.log(logMessage);
+                            }
+                        }
+                    }
+                }
+
+                if ("Network.responseReceived".equals(method)) {
+                    JsonObject params = message.getAsJsonObject("params");
+                    if (params != null && params.has("type") && params.has("response")) {
+                        String type = params.get("type").getAsString();
+                        if (trackedTypes.contains(type)) {
+                            JsonObject response = params.getAsJsonObject("response");
+                            String requestId = params.has("requestId") ? params.get("requestId").getAsString() : "N/A";
+                            int status = response.has("status") ? response.get("status").getAsInt() : -1;
+
+                            responseStatusMap.put(requestId, status);
+
+                            if (enableVerboseLogging) {
+                                String url = response.has("url") ? response.get("url").getAsString() : "unknown";
+                                String name = extractNameFromUrl.apply(url);
+                                String logMessage = String.format("Response received: %s, %d, %s, %s",
+                                        name, status, type, url);
+//                                 Remove comment to have logs for investigation
+//                                 ReportMsg.log(logMessage);
+                            }
+                        }
+                    }
+                }
+
+            } catch (Exception e) {
+                if (enableVerboseLogging) {
+                    ReportMsg.log("Malformed log skipped: " + e.getMessage());
+                }
+            }
+        }
+        return !found;
     }
 
     /*

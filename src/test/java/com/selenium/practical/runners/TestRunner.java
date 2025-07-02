@@ -1,18 +1,33 @@
 package com.selenium.practical.runners;
 
-import org.junit.platform.suite.api.ConfigurationParameter;
-import org.junit.platform.suite.api.IncludeEngines;
-import org.junit.platform.suite.api.SelectClasspathResource;
-import org.junit.platform.suite.api.Suite;
+import com.selenium.practical.driver.DriverManager;
+import io.cucumber.testng.AbstractTestNGCucumberTests;
+import io.cucumber.testng.CucumberOptions;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 
-import static io.cucumber.core.options.Constants.FILTER_TAGS_PROPERTY_NAME;
-import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
+@CucumberOptions(
+        // Path to your feature files
+        features = "src/test/resources/features",
 
-@Suite
-@IncludeEngines("cucumber")
-@SelectClasspathResource("features")
-@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty")
-// Add scenario tags here, e.g. "@smoke"
-@ConfigurationParameter(key = FILTER_TAGS_PROPERTY_NAME, value = "@smoke or @regression")
-public class TestRunner {
+        // Package where your step definitions and hooks are
+        glue = "com.selenium.practical",
+
+        // The tags to run
+        tags = "@smoke",
+
+        // Reporting plugins
+        plugin = {"pretty", "json:target/cucumber-report.json"}
+)
+public class TestRunner extends AbstractTestNGCucumberTests {
+
+    @BeforeClass
+    public static void setup() {
+        DriverManager.createDriver();
+    }
+
+    @AfterClass
+    public static void teardown() {
+        DriverManager.quitDriver();
+    }
 }
