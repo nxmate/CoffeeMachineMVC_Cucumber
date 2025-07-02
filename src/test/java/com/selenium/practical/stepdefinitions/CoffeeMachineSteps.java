@@ -1,11 +1,10 @@
 package com.selenium.practical.stepdefinitions;
 
-import com.selenium.practical.config.WebDriverFactory;
+import com.selenium.practical.driver.DriverManager;
 import com.selenium.practical.pages.CoffeeMachinePages;
 import com.selenium.practical.utils.ReportMsg;
 import com.selenium.practical.utils.SeleniumWait;
 import com.selenium.practical.utils.TestDataLoader;
-import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -13,16 +12,24 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.openqa.selenium.WebDriver;
 
+import static com.selenium.practical.utils.Timeouts.*;
+
 public class CoffeeMachineSteps {
-    protected SeleniumWait wait;
     private WebDriver driver;
+    private SeleniumWait wait;
     private CoffeeMachinePages page;
 
     @Before
-    public void setup() {
-        driver = WebDriverFactory.createDriver();
-        wait = new SeleniumWait(driver, 30);
+    public void initializePageObjects() {
+        driver = DriverManager.getDriver();
+        wait = new SeleniumWait(driver, SHORT_TIMEOUT);
         page = new CoffeeMachinePages(driver, wait);
+    }
+
+    @And("I wait for solid network silence")
+    public void waitForSolidNetworkSilence() {
+        wait.waitForSolidNetworkSilence();
+        ReportMsg.log("User wait for solid network silence.");
     }
 
     @Given("I open the coffee machine website")
@@ -61,21 +68,8 @@ public class CoffeeMachineSteps {
         page.selectCoffeeType(coffeeType);
     }
 
-    @And("I wait for solid network silence")
-    public void waitForSolidNetworkSilence() {
-        wait.waitForSolidNetworkSilence();
-        ReportMsg.log("User wait for solid network silence.");
-    }
-
     @When("^I wait for (\\d+) seconds$")
     public void waitForSpecifiedTime(int sec) {
         wait.waitForSpecifiedTime(sec);
-    }
-
-    @After
-    public void teardown() {
-        if (driver != null) {
-            driver.quit();
-        }
     }
 }

@@ -1,5 +1,6 @@
 package com.selenium.practical.getpageobjects;
 
+import com.selenium.practical.utils.NetworkWaiter;
 import com.selenium.practical.utils.ReportMsg;
 import com.selenium.practical.utils.SeleniumWait;
 import org.apache.commons.lang3.StringUtils;
@@ -7,11 +8,12 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Select;
 import org.testng.Reporter;
-
+import com.selenium.practical.driver.DriverManager;
 import java.time.Duration;
 import java.util.Objects;
 
 import static com.selenium.practical.utils.ReportMsg.log;
+import static com.selenium.practical.utils.Timeouts.SHORT_TIMEOUT;
 import static java.lang.System.getProperty;
 import static org.testng.Assert.fail;
 
@@ -20,11 +22,14 @@ public class GetPage {
     private final WebDriver driver;
     protected final int AJAX_WAIT = 5;
     public String pageName;
+    protected NetworkWaiter networkWaiter;
 
     public GetPage(WebDriver driver, SeleniumWait wait, String pageName) {
         this.driver = driver;
         this.wait = wait;
         this.pageName = pageName;
+        this.networkWaiter = DriverManager.getNetworkWaiter();
+
     }
 
     public int getConfigTimeOut() {
@@ -197,5 +202,14 @@ public class GetPage {
             fail("[UNHANDLED EXCEPTION]: " + npe.getLocalizedMessage());
         }
         return foundElement;
+    }
+
+    public void waitForNetworkActivityToComplete() {
+        networkWaiter.waitForAllNetworkRequestsToFinish(SHORT_TIMEOUT);
+        System.out.println("[INFO]: Network is idle. Proceeding with the next step.");
+    }
+
+    public void resetNetworkWaiter() {
+        networkWaiter.reset();
     }
 }
